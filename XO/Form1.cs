@@ -15,7 +15,7 @@ namespace XO
         Game.State turn;
         Bot bot1;
         Bot bot2;
-        bool play = false;
+        bool play = true;
 
         private void Form1_Load(object sender, EventArgs e)
         {

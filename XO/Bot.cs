@@ -40,9 +40,10 @@ namespace XO
                     n = SearchMemory(hash, node);
                     if (n != null)
                     {
-                        MyState = n;
                         Connect(n);
-                        Trail.Push(n);
+                        MyState = n;
+                        MyState.Explored = true;
+                        Trail.Push(MyState);
                         return true;
                     }
                 }
@@ -50,6 +51,8 @@ namespace XO
             else
             {
                 MyState = n;
+                MyState.Explored = true;
+                Trail.Push(MyState);
                 return true;
             }
             return false;
@@ -80,6 +83,7 @@ namespace XO
             LearnMoves(n, board);
             Connect(n);
             MyState = n;
+            MyState.Explored = true;
             Trail.Push(MyState);
         }
 
@@ -106,7 +110,7 @@ namespace XO
                 e.Add(n);
             }
             else if(!Knowledge.Contains(n))
-                Knowledge.Add(MyState);
+                Knowledge.Add(n);
         }
 
 
@@ -122,8 +126,9 @@ namespace XO
         {
             foreach (Edge e in MyState.Moves)
             {
-                if (e.Children.Count==0)
+                if (!e.Explored)
                 {
+                    e.Explored = true;
                     Trail.Push(e);
                     return true;
                 }
@@ -201,36 +206,54 @@ namespace XO
 
         public void FeedBack(Game.State r)
         {
-            double c;
             if (r == Game.State.Win)
             {
-                c = 1;
+                Edge m = (Edge)Trail.Pop();
+                m.Score += 100;
+                m.Explored = true;
             }
             else if (r == Game.State.Draw)
             {
-                c = 0;
+                goto end;
             }
             else
             {
-                c = -1;
+                Edge m = (Edge)Trail.Pop();
+                m.Score -= 100;
+                m.Explored = true;
             }
-            double n = 0;
+
             while (Trail.Count > 0)
             {
                 if (Trail.Count % 2 == 0)
                 {
                     Edge m = (Edge)Trail.Pop();
-                    m.Score += c * f(n);
-                    n += 1;
+                    foreach (Node n in m.Children)
+                    {
+                        if (!n.Explored)
+                            m.Explored = false;
+                        m.Score += n.Score;
+                    }
+                    m.Score /= m.Children.Count;
                 }
                 else if (Trail.Count % 2 == 1)
                 {
                     Node s = (Node)Trail.Pop();
-                    s.Score += c * f(n);
-                    n += 1;
+                    double score = double.MinValue;
+                    foreach (Edge e in s.Moves)
+                    {
+                        if (!e.Explored)
+                            s.Explored = false;
+                        if (e.Score >= score)
+                            score = e.Score;
+                    }
+                    s.Score = score;
                 }
             }
-            MyState = null;
+
+            end:
+                MyState = null;
+                Trail = new Stack<Object>();
         }
 
         public double f(double n)
