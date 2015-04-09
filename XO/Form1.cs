@@ -15,7 +15,7 @@ namespace XO
         Game.State turn;
         Bot bot1;
         Bot bot2;
-        bool play = true;
+        bool play = false;
 
         private void Form1_Load(object sender, EventArgs e)
         {
@@ -23,7 +23,7 @@ namespace XO
             bot1 = new Bot(Game.State.X);
             bot2 = new Bot(Game.State.O);
             turn = Game.State.X;
-            for (int i = 0; i < 1000; i++)
+            while (play)
             {
                 BotMove(bot1, bot2);
                 BotMove(bot2, bot1);

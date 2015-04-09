@@ -6,26 +6,19 @@ namespace XO
     {
         public double Hash;
         public List<Edge> Moves = new List<Edge>();
+        public double Score = 0;
 
         public Node(double hash)
         {
             Hash = hash;
         }
 
-        public void AddMove(Edge e)
+        public void Add(Edge e)
         {
-            Moves.Add(e);
-        }
-
-        public override string ToString()
-        {
-            string s = "";
-            s += "S" + Hash.ToString() + ": ";
-            foreach (Edge e in Moves)
+            if (!Moves.Contains(e))
             {
-                s += "\nM" + e.Hash.ToString() + " -> " + e.Child.ToString();
+                Moves.Add(e);
             }
-            return s;
         }
     }
 }

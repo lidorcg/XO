@@ -6,26 +6,14 @@ namespace XO
 {
     class Bot
     {
-        private Node Knowledge;
+        private List<Node> Knowledge = new List<Node>();
         private Game.State Me;
         private Node MyState;
-        private Stack<Edge> LastMoves;
+        private Stack<Object> Trail = new Stack<Object>();
 
         public Bot(Game.State me)
         {
-            Knowledge = new Node(0.0);
             Me = me;
-            MyState = Knowledge;
-            LastMoves = new Stack<Edge>();
-
-            for (int i = 0; i < 3; i++)
-            {
-                for (int j = 0; j < 3; j++)
-                {
-                    double hash = Hash(new int[2] { i, j });
-                    MyState.AddMove(new Edge(MyState, hash));
-                }
-            }
         }
 
         public int[] Play(Game game)
@@ -35,13 +23,11 @@ namespace XO
             return Act();
         }
 
-
         private void Perceive(Game game)
         {
             if (IKnowThis(Hash(game.GetBoard())))
                 return;
-            else
-                Learn(game.GetBoard());
+            Learn(game.GetBoard());
         }
 
         private bool IKnowThis(double hash)
@@ -49,15 +35,24 @@ namespace XO
             Node n = SearchMemory(hash, MyState);
             if (n == null)
             {
-                n = SearchMemory(hash, Knowledge);
-                if (n != null)
+                foreach (Node node in Knowledge)
                 {
-                    Connect(n);
-                } else
-                    return false;
+                    n = SearchMemory(hash, node);
+                    if (n != null)
+                    {
+                        MyState = n;
+                        Connect(n);
+                        Trail.Push(n);
+                        return true;
+                    }
+                }
             }
-            MyState = n;
-            return true;
+            else
+            {
+                MyState = n;
+                return true;
+            }
+            return false;
         }
 
         private Node SearchMemory(double hash, Node n)
@@ -68,30 +63,27 @@ namespace XO
                     return n;
                 foreach (Edge e in n.Moves)
                 {
-                    Node node = SearchMemory(hash, e.Child);
-                    if (node != null)
-                        return node;
+                    foreach (Node n1 in e.Children)
+                    {
+                        Node node = SearchMemory(hash, n1);
+                        if (node != null)
+                            return node;
+                    }
                 }
             }
             return null;
         }
 
-        private void Connect(Node n)
-        {
-            double hash = n.Hash - MyState.Hash;
-            Edge e = new Edge(MyState, n, hash);
-            MyState.AddMove(e);
-        }
-
         private void Learn(Game.State[,] board)
         {
             Node n = new Node(Hash(board));
+            LearnMoves(n, board);
             Connect(n);
             MyState = n;
-            LearnMoves(board);
+            Trail.Push(MyState);
         }
 
-        private void LearnMoves(Game.State[,] board)
+        private void LearnMoves(Node n, Game.State[,] board)
         {
             for (int i = 0; i < 3; i++)
             {
@@ -100,54 +92,39 @@ namespace XO
                     if (board[i, j] == Game.State.Blank)
                     {
                         double hash = Hash(new int[2] { i, j });
-                        MyState.AddMove(new Edge(MyState, hash));
+                        n.Add(new Edge(hash));
                     }
                 }
             }
         }
 
+        private void Connect(Node n)
+        {
+            if (Trail.Count != 0)
+            {
+                Edge e = (Edge)Trail.Peek();
+                e.Add(n);
+            }
+            else if(!Knowledge.Contains(n))
+                Knowledge.Add(MyState);
+        }
+
 
         private void Decide(Game game)
         {
-            if (Good())
+            if (HasNewMove())
                 return;
             else
-            {
-                if (HasNewMove())
-                    return;
-                else
-                {
-                    FindBestMove();
-                }
-            }
-        }
-
-        private bool Good()
-        {
-            foreach (Edge e in MyState.Moves)
-            {
-                if (e.Score > 0)
-                {
-                    LastMoves.Push(e);
-                    MyState = e.Child;
-                    return true;
-                }
-            }
-            return false;
+                FindBestMove();
         }
 
         private bool HasNewMove()
         {
             foreach (Edge e in MyState.Moves)
             {
-                if (e.Child==null)
+                if (e.Children.Count==0)
                 {
-                    Node n = SearchMemory(MyState.Hash + e.Hash, Knowledge);
-                    if (n == null)
-                        n = new Node(MyState.Hash + e.Hash);
-                    e.Child = n;
-                    LastMoves.Push(e);
-                    MyState = e.Child;
+                    Trail.Push(e);
                     return true;
                 }
             }
@@ -164,14 +141,14 @@ namespace XO
                     m = e;
                 }
             }
-            LastMoves.Push(m);
-            MyState = m.Child;
+            Trail.Push(m);
         }
 
 
         private int[] Act()
         {
-            return Decode(LastMoves.Peek().Hash);
+            Edge e = (Edge)Trail.Peek();
+            return Decode(e.Hash);
         }
 
 
@@ -222,14 +199,14 @@ namespace XO
         }
 
 
-        public void FeedBack(Game.State s)
+        public void FeedBack(Game.State r)
         {
             double c;
-            if (s == Game.State.Win)
+            if (r == Game.State.Win)
             {
                 c = 1;
             }
-            else if (s == Game.State.Draw)
+            else if (r == Game.State.Draw)
             {
                 c = 0;
             }
@@ -238,13 +215,22 @@ namespace XO
                 c = -1;
             }
             double n = 0;
-            while (LastMoves.Count > 0)
+            while (Trail.Count > 0)
             {
-                Edge e = LastMoves.Pop();
-                e.Score += c * f(n);
-                n += 1;
+                if (Trail.Count % 2 == 0)
+                {
+                    Edge m = (Edge)Trail.Pop();
+                    m.Score += c * f(n);
+                    n += 1;
+                }
+                else if (Trail.Count % 2 == 1)
+                {
+                    Node s = (Node)Trail.Pop();
+                    s.Score += c * f(n);
+                    n += 1;
+                }
             }
-            MyState = Knowledge;
+            MyState = null;
         }
 
         public double f(double n)
@@ -256,7 +242,7 @@ namespace XO
         private string PrintStack()
         {
             string s = "";
-            foreach (Edge e in LastMoves)
+            foreach (Edge e in Trail)
             {
                 s += "M" + e.Hash.ToString() + " -> ";
             }

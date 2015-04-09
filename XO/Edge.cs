@@ -8,22 +8,21 @@ namespace XO
 {
     class Edge
     {
-        public Node Parent;
-        public Node Child;
         public double Hash;
+        public List<Node> Children = new List<Node>();
         public double Score = 0;
 
-        public Edge(Node p, Node c, double h)
+        public Edge(double h)
         {
-            Parent = p;
-            Child = c;
             Hash = h;
         }
 
-        public Edge(Node p, double h)
+        public void Add(Node c)
         {
-            Parent = p;
-            Hash = h;
+            if (!Children.Contains(c))
+            {
+                Children.Add(c);
+            }
         }
     }
 }
