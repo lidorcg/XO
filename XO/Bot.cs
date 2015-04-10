@@ -42,7 +42,6 @@ namespace XO
                     {
                         Connect(n);
                         MyState = n;
-                        MyState.Explored = true;
                         Trail.Push(MyState);
                         return true;
                     }
@@ -51,7 +50,6 @@ namespace XO
             else
             {
                 MyState = n;
-                MyState.Explored = true;
                 Trail.Push(MyState);
                 return true;
             }
@@ -83,7 +81,6 @@ namespace XO
             LearnMoves(n, board);
             Connect(n);
             MyState = n;
-            MyState.Explored = true;
             Trail.Push(MyState);
         }
 
@@ -124,14 +121,20 @@ namespace XO
 
         private bool HasNewMove()
         {
+            List<Edge> NewMoves = new List<Edge>();
             foreach (Edge e in MyState.Moves)
             {
                 if (!e.Explored)
                 {
-                    e.Explored = true;
-                    Trail.Push(e);
-                    return true;
+                    NewMoves.Add(e);
                 }
+            }
+            if (NewMoves.Count > 0)
+            {
+                Random random = new Random();
+                int randomNumber = random.Next(0, NewMoves.Count);
+                Trail.Push(NewMoves[randomNumber]);
+                return true;
             }
             return false;
         }
@@ -214,7 +217,7 @@ namespace XO
             }
             else if (r == Game.State.Draw)
             {
-                goto end;
+
             }
             else
             {
@@ -228,10 +231,10 @@ namespace XO
                 if (Trail.Count % 2 == 0)
                 {
                     Edge m = (Edge)Trail.Pop();
+                    m.Explored = true;
                     foreach (Node n in m.Children)
                     {
-                        if (!n.Explored)
-                            m.Explored = false;
+                        m.Explored &= n.Explored;
                         m.Score += n.Score;
                     }
                     m.Score /= m.Children.Count;
@@ -240,20 +243,18 @@ namespace XO
                 {
                     Node s = (Node)Trail.Pop();
                     double score = double.MinValue;
+                    s.Explored = true;
                     foreach (Edge e in s.Moves)
                     {
-                        if (!e.Explored)
-                            s.Explored = false;
+                        s.Explored &= e.Explored;
                         if (e.Score >= score)
                             score = e.Score;
                     }
                     s.Score = score;
                 }
-            }
-
-            end:
-                MyState = null;
-                Trail = new Stack<Object>();
+            }  
+            MyState = null;
+            Trail = new Stack<Object>();
         }
 
         public double f(double n)

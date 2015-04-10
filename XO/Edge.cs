@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace XO
 {
-    [DebuggerDisplay("{Visited}")]
+    [DebuggerDisplay("{Explored}")]
     class Edge
     {
         public double Hash;
