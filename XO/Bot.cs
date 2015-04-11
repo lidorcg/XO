@@ -272,6 +272,8 @@ namespace XO
                     double score = double.MaxValue;
                     foreach (Node n in m.Children)
                     {
+                        if (!n.Explored)
+                            m.Explored = false;
                         if (n.Score < score)
                             score = n.Score;
                     }
