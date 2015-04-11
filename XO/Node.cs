@@ -3,7 +3,7 @@ using System.Diagnostics;
 
 namespace XO
 {
-    [DebuggerDisplay("Hash = {Hash}")]
+    [DebuggerDisplay("{Explored}")]
     class Node
     {
         public double Hash;

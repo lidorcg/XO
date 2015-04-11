@@ -23,11 +23,12 @@ namespace XO
             bot1 = new Bot(Game.State.X);
             bot2 = new Bot(Game.State.O);
             turn = Game.State.X;
-            for (int i = 0; i < 9999999; i++)
-            {
-                BotMove(bot1, bot2);
+            for (int i = 0; i < 999999; i++)
+			{
+			    BotMove(bot1, bot2);
                 BotMove(bot2, bot1);
-            }
+			}
+            play = false;
         }
 
         private void tableLayoutPanel1_Paint(object sender, PaintEventArgs e)
@@ -78,14 +79,16 @@ namespace XO
                 {
                     Console.WriteLine(bot.ToString() +" Win!");
                     bot.FeedBack(s);
-                    Other.FeedBack(0);
+                    if (play)
+                        Other.FeedBack(0);
                     ResetGame();
                 }
                 else if (s == Game.State.Draw)
                 {
                     Console.WriteLine("Draw!");
                     bot.FeedBack(s);
-                    Other.FeedBack(s);
+                    if(play)
+                        Other.FeedBack(s);
                     ResetGame();
                 }
                 NextTrun();

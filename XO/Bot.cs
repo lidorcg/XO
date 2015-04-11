@@ -26,8 +26,14 @@ namespace XO
         private void Perceive(Game game)
         {
             if (IKnowThis(Hash(game.GetBoard())))
-                return;
-            Learn(game.GetBoard());
+            {
+
+            }
+            else
+            {
+                Learn(game.GetBoard());
+            }
+            MyState.Explored = true;
         }
 
         private bool IKnowThis(double hash)
@@ -113,49 +119,57 @@ namespace XO
 
         private void Decide(Game game)
         {
-            if (HasNewMove())
+            if (HasGoodMove())
                 return;
             else
                 FindBestMove();
         }
 
-        private bool HasNewMove()
+        private bool HasGoodMove()
         {
-            List<Edge> NewMoves = new List<Edge>();
             foreach (Edge e in MyState.Moves)
             {
-                if (!e.Explored)
+                if (e.Score > 0)
                 {
-                    NewMoves.Add(e);
+                    Trail.Push(e);
+                    return true;
                 }
-            }
-            if (NewMoves.Count > 0)
-            {
-                Random random = new Random();
-                int randomNumber = random.Next(0, NewMoves.Count);
-                Trail.Push(NewMoves[randomNumber]);
-                return true;
             }
             return false;
         }
 
         private void FindBestMove()
         {
+            List<Edge> NeutralMoves = new List<Edge>();
             Edge m = MyState.Moves[0];
             foreach (Edge e in MyState.Moves)
             {
+                if (e.Score==0)
+                {
+                    NeutralMoves.Add(e);
+                }
                 if (e.Score > m.Score)
                 {
                     m = e;
                 }
             }
-            Trail.Push(m);
+            if (NeutralMoves.Count > 0)
+            {
+                Random random = new Random();
+                int randomNumber = random.Next(0, NeutralMoves.Count);
+                Trail.Push(NeutralMoves[randomNumber]);
+            }
+            else
+            {
+                Trail.Push(m);
+            }
         }
 
 
         private int[] Act()
         {
             Edge e = (Edge)Trail.Peek();
+            e.Explored = true;
             return Decode(e.Hash);
         }
 
@@ -212,18 +226,17 @@ namespace XO
             if (r == Game.State.Win)
             {
                 Edge m = (Edge)Trail.Pop();
-                m.Score += 100;
-                m.Explored = true;
+                m.Score = Math.E*100.0;
             }
             else if (r == Game.State.Draw)
             {
-
+                Edge m = (Edge)Trail.Pop();
+                m.Score = 0.0;
             }
             else
             {
                 Edge m = (Edge)Trail.Pop();
-                m.Score -= 100;
-                m.Explored = true;
+                m.Score = -Math.E*100.0;
             }
 
             while (Trail.Count > 0)
@@ -231,23 +244,23 @@ namespace XO
                 if (Trail.Count % 2 == 0)
                 {
                     Edge m = (Edge)Trail.Pop();
-                    m.Explored = true;
+                    double score = double.MaxValue;
                     foreach (Node n in m.Children)
                     {
-                        m.Explored &= n.Explored;
-                        m.Score += n.Score;
+                        if (n.Score < score)
+                            score = n.Score;
                     }
-                    m.Score /= m.Children.Count;
+                    m.Score = score;
                 }
                 else if (Trail.Count % 2 == 1)
                 {
                     Node s = (Node)Trail.Pop();
                     double score = double.MinValue;
-                    s.Explored = true;
                     foreach (Edge e in s.Moves)
                     {
-                        s.Explored &= e.Explored;
-                        if (e.Score >= score)
+                        if (!e.Explored)
+                            s.Explored = false;
+                        if (e.Score > score)
                             score = e.Score;
                     }
                     s.Score = score;
