@@ -3,7 +3,7 @@ using System.Diagnostics;
 
 namespace XO
 {
-    [DebuggerDisplay("{Explored}")]
+    [DebuggerDisplay("Exp = {Explored}, Scr = {Score}")]
     class Node
     {
         public double Hash;

@@ -121,8 +121,10 @@ namespace XO
         {
             if (HasGoodMove())
                 return;
+            else if (HasNewMove())
+                return;
             else
-                FindBestMove();
+                SomeMove();
         }
 
         private bool HasGoodMove()
@@ -138,7 +140,30 @@ namespace XO
             return false;
         }
 
-        private void FindBestMove()
+        private bool HasNewMove()
+        {
+            List<Edge> NewMoves = new List<Edge>();
+            foreach (Edge e in MyState.Moves)
+            {
+                if (!e.Explored)
+                {
+                    NewMoves.Add(e);
+                }
+            }
+            if (NewMoves.Count > 0)
+            {
+                Random random = new Random();
+                int randomNumber = random.Next(0, NewMoves.Count);
+                Trail.Push(NewMoves[randomNumber]);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        private void SomeMove()
         {
             List<Edge> NeutralMoves = new List<Edge>();
             Edge m = MyState.Moves[0];

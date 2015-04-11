@@ -23,7 +23,7 @@ namespace XO
             bot1 = new Bot(Game.State.X);
             bot2 = new Bot(Game.State.O);
             turn = Game.State.X;
-            for (int i = 0; i < 999999; i++)
+            for (int i = 0; i < 1999999; i++)
 			{
 			    BotMove(bot1, bot2);
                 BotMove(bot2, bot1);
