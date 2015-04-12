@@ -25,14 +25,9 @@ namespace XO
 
         private void Perceive(Game game)
         {
-            if (IKnowThis(Hash(game.GetBoard())))
-            {
-
-            }
+            if (IKnowThis(Hash(game.GetBoard())));
             else
-            {
                 Learn(game.GetBoard());
-            }
             MyState.Explored = true;
         }
 
@@ -129,27 +124,27 @@ namespace XO
 
         private bool HasGoodMove()
         {
+            List<Edge> GoodMoves = new List<Edge>();
             foreach (Edge e in MyState.Moves)
-            {
                 if (e.Score > 0)
-                {
-                    Trail.Push(e);
-                    return true;
-                }
+                    GoodMoves.Add(e);
+            if (GoodMoves.Count > 0)
+            {
+                Random random = new Random();
+                int randomNumber = random.Next(0, GoodMoves.Count);
+                Trail.Push(GoodMoves[randomNumber]);
+                return true;
             }
-            return false;
+            else
+                return false;
         }
 
         private bool HasNewMove()
         {
             List<Edge> NewMoves = new List<Edge>();
             foreach (Edge e in MyState.Moves)
-            {
                 if (!e.Explored)
-                {
                     NewMoves.Add(e);
-                }
-            }
             if (NewMoves.Count > 0)
             {
                 Random random = new Random();
@@ -158,9 +153,7 @@ namespace XO
                 return true;
             }
             else
-            {
                 return false;
-            }
         }
 
         private void SomeMove()
@@ -169,15 +162,11 @@ namespace XO
             Edge m = MyState.Moves[0];
             foreach (Edge e in MyState.Moves)
             {
-                if (e.Score==0)
-                {
+                if (e.Score == 0)
                     NeutralMoves.Add(e);
-                }
                 if (e.Score > m.Score)
-                {
                     m = e;
-                }
-            }
+            }     
             if (NeutralMoves.Count > 0)
             {
                 Random random = new Random();
@@ -185,9 +174,7 @@ namespace XO
                 Trail.Push(NeutralMoves[randomNumber]);
             }
             else
-            {
                 Trail.Push(m);
-            }
         }
 
 
@@ -272,8 +259,6 @@ namespace XO
                     double score = double.MaxValue;
                     foreach (Node n in m.Children)
                     {
-                        if (!n.Explored)
-                            m.Explored = false;
                         if (n.Score < score)
                             score = n.Score;
                     }
