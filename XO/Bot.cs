@@ -6,9 +6,9 @@ namespace XO
 {
     class Bot
     {
-        private List<Node> Knowledge = new List<Node>();
+        private KnowledgeContainer Knowledge = new KnowledgeContainer();
         private Game.State Me;
-        private Node MyState;
+        private State MyState;
         private Stack<Object> Trail = new Stack<Object>();
 
         public Bot(Game.State me)
@@ -29,23 +29,21 @@ namespace XO
             else
                 Learn(game.GetBoard());
             MyState.Explored = true;
+            Knowledge.SaveChanges();
         }
 
-        private bool IKnowThis(double hash)
+        private bool IKnowThis(int hash)
         {
-            Node n = SearchMemory(hash, MyState);
+            State n = SearchMemory(hash, MyState);
             if (n == null)
             {
-                foreach (Node node in Knowledge)
+                n = Knowledge.States.Find(hash);
+                if (n != null)
                 {
-                    n = SearchMemory(hash, node);
-                    if (n != null)
-                    {
-                        Connect(n);
-                        MyState = n;
-                        Trail.Push(MyState);
-                        return true;
-                    }
+                    Connect(n);
+                    MyState = n;
+                    Trail.Push(MyState);
+                    return true;
                 }
             }
             else
@@ -57,17 +55,17 @@ namespace XO
             return false;
         }
 
-        private Node SearchMemory(double hash, Node n)
+        private State SearchMemory(double hash, State n)
         {
             if (n != null)
             {
                 if (hash == n.Hash)
                     return n;
-                foreach (Edge e in n.Moves)
+                foreach (Action e in n.Actions)
                 {
-                    foreach (Node n1 in e.Children)
+                    foreach (State n1 in e.NextState)
                     {
-                        Node node = SearchMemory(hash, n1);
+                        State node = SearchMemory(hash, n1);
                         if (node != null)
                             return node;
                     }
@@ -78,14 +76,15 @@ namespace XO
 
         private void Learn(Game.State[,] board)
         {
-            Node n = new Node(Hash(board));
+            State n = new State { Hash = Hash(board) };
+            Knowledge.States.Add(n);
             LearnMoves(n, board);
             Connect(n);
             MyState = n;
             Trail.Push(MyState);
         }
 
-        private void LearnMoves(Node n, Game.State[,] board)
+        private void LearnMoves(State n, Game.State[,] board)
         {
             for (int i = 0; i < 3; i++)
             {
@@ -94,21 +93,19 @@ namespace XO
                     if (board[i, j] == Game.State.Blank)
                     {
                         double hash = Hash(new int[2] { i, j });
-                        n.Add(new Edge(hash));
+                        n.Actions.Add(new Action{Hash = hash});
                     }
                 }
             }
         }
 
-        private void Connect(Node n)
+        private void Connect(State n)
         {
-            if (Trail.Count != 0)
+            if (Trail.Count > 0)
             {
-                Edge e = (Edge)Trail.Peek();
-                e.Add(n);
+                Action e = (Action)Trail.Peek();
+                e.NextState.Add(n);
             }
-            else if(!Knowledge.Contains(n))
-                Knowledge.Add(n);
         }
 
 
@@ -124,8 +121,8 @@ namespace XO
 
         private bool HasGoodMove()
         {
-            List<Edge> GoodMoves = new List<Edge>();
-            foreach (Edge e in MyState.Moves)
+            List<Action> GoodMoves = new List<Action>();
+            foreach (Action e in MyState.Actions)
                 if (e.Score > 0)
                     GoodMoves.Add(e);
             if (GoodMoves.Count > 0)
@@ -141,8 +138,8 @@ namespace XO
 
         private bool HasNewMove()
         {
-            List<Edge> NewMoves = new List<Edge>();
-            foreach (Edge e in MyState.Moves)
+            List<Action> NewMoves = new List<Action>();
+            foreach (Action e in MyState.Actions)
                 if (!e.Explored)
                     NewMoves.Add(e);
             if (NewMoves.Count > 0)
@@ -158,9 +155,9 @@ namespace XO
 
         private void SomeMove()
         {
-            List<Edge> NeutralMoves = new List<Edge>();
-            Edge m = MyState.Moves[0];
-            foreach (Edge e in MyState.Moves)
+            List<Action> NeutralMoves = new List<Action>();
+            Action m = new Action { Score = double.MinValue };
+            foreach (Action e in MyState.Actions)
             {
                 if (e.Score == 0)
                     NeutralMoves.Add(e);
@@ -180,13 +177,14 @@ namespace XO
 
         private int[] Act()
         {
-            Edge e = (Edge)Trail.Peek();
+            Action e = (Action)Trail.Peek();
             e.Explored = true;
+            Knowledge.SaveChanges();
             return Decode(e.Hash);
         }
 
 
-        private double Hash(Game.State[,] board)
+        private int Hash(Game.State[,] board)
         {
             double hash = 0;
             for (int i = 0; i < 3; i++)
@@ -208,7 +206,7 @@ namespace XO
                     }
                 }
             }
-            return hash;
+            return Convert.ToInt32(hash);
         }
 
         private double Hash(int[] move)
@@ -235,29 +233,21 @@ namespace XO
 
         public void FeedBack(Game.State r)
         {
+            Action m = (Action)Trail.Pop();
             if (r == Game.State.Win)
-            {
-                Edge m = (Edge)Trail.Pop();
                 m.Score = Math.E*100.0;
-            }
             else if (r == Game.State.Draw)
-            {
-                Edge m = (Edge)Trail.Pop();
                 m.Score = 0.0;
-            }
             else
-            {
-                Edge m = (Edge)Trail.Pop();
                 m.Score = -Math.E*100.0;
-            }
 
             while (Trail.Count > 0)
             {
                 if (Trail.Count % 2 == 0)
                 {
-                    Edge m = (Edge)Trail.Pop();
+                    m = (Action)Trail.Pop();
                     double score = double.MaxValue;
-                    foreach (Node n in m.Children)
+                    foreach (State n in m.NextState)
                     {
                         if (n.Score < score)
                             score = n.Score;
@@ -266,9 +256,9 @@ namespace XO
                 }
                 else if (Trail.Count % 2 == 1)
                 {
-                    Node s = (Node)Trail.Pop();
+                    State s = (State)Trail.Pop();
                     double score = double.MinValue;
-                    foreach (Edge e in s.Moves)
+                    foreach (Action e in s.Actions)
                     {
                         if (!e.Explored)
                             s.Explored = false;
@@ -277,7 +267,8 @@ namespace XO
                     }
                     s.Score = score;
                 }
-            }  
+            }
+            Knowledge.SaveChanges();
             MyState = null;
             Trail = new Stack<Object>();
         }
@@ -291,7 +282,7 @@ namespace XO
         private string PrintStack()
         {
             string s = "";
-            foreach (Edge e in Trail)
+            foreach (Action e in Trail)
             {
                 s += "M" + e.Hash.ToString() + " -> ";
             }

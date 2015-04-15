@@ -1,0 +1,219 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+  <!-- EF Runtime content -->
+  <edmx:Runtime>
+    <!-- SSDL content -->
+    <edmx:StorageModels>
+    <Schema Namespace="Knowledge.Store" Alias="Self" Provider="System.Data.SqlClient" ProviderManifestToken="2012" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+  <EntityContainer Name="KnowledgeStoreContainer">
+    <EntitySet Name="States" EntityType="Knowledge.Store.States" store:Type="Tables" Schema="dbo" />
+    <EntitySet Name="Actions" EntityType="Knowledge.Store.Actions" store:Type="Tables" Schema="dbo" />
+    <EntitySet Name="StateAction" EntityType="Knowledge.Store.StateAction" store:Type="Tables" Schema="dbo" />
+    <EntitySet Name="ActionState" EntityType="Knowledge.Store.ActionState" store:Type="Tables" Schema="dbo" />
+    <AssociationSet Name="FK_StateAction_State" Association="Knowledge.Store.FK_StateAction_State">
+      <End Role="State" EntitySet="States" />
+      <End Role="StateAction" EntitySet="StateAction" />
+    </AssociationSet>
+    <AssociationSet Name="FK_StateAction_Action" Association="Knowledge.Store.FK_StateAction_Action">
+      <End Role="Action" EntitySet="Actions" />
+      <End Role="StateAction" EntitySet="StateAction" />
+    </AssociationSet>
+    <AssociationSet Name="FK_ActionState_Action" Association="Knowledge.Store.FK_ActionState_Action">
+      <End Role="Action" EntitySet="Actions" />
+      <End Role="ActionState" EntitySet="ActionState" />
+    </AssociationSet>
+    <AssociationSet Name="FK_ActionState_State" Association="Knowledge.Store.FK_ActionState_State">
+      <End Role="State" EntitySet="States" />
+      <End Role="ActionState" EntitySet="ActionState" />
+    </AssociationSet>
+  </EntityContainer>
+  <EntityType Name="States">
+    <Key>
+      <PropertyRef Name="Hash" />
+    </Key>
+    <Property Name="Hash" Type="int" Nullable="false" />
+    <Property Name="Score" Type="float" Nullable="false" DefaultValue="0" />
+    <Property Name="Explored" Type="bit" Nullable="false" DefaultValue="false" />
+  </EntityType>
+  <EntityType Name="Actions">
+    <Key>
+      <PropertyRef Name="Id" />
+    </Key>
+    <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+    <Property Name="Hash" Type="float" Nullable="false" />
+    <Property Name="Score" Type="float" Nullable="false" DefaultValue="0" />
+    <Property Name="Explored" Type="bit" Nullable="false" DefaultValue="false" />
+  </EntityType>
+  <EntityType Name="StateAction">
+    <Key>
+      <PropertyRef Name="PrevState_Hash" />
+      <PropertyRef Name="Actions_Id" />
+    </Key>
+    <Property Name="PrevState_Hash" Type="int" Nullable="false" />
+    <Property Name="Actions_Id" Type="int" Nullable="false" />
+  </EntityType>
+  <EntityType Name="ActionState">
+    <Key>
+      <PropertyRef Name="Causes_Id" />
+      <PropertyRef Name="NextState_Hash" />
+    </Key>
+    <Property Name="Causes_Id" Type="int" Nullable="false" />
+    <Property Name="NextState_Hash" Type="int" Nullable="false" />
+  </EntityType>
+  <Association Name="FK_StateAction_State">
+    <End Role="State" Type="Knowledge.Store.States" Multiplicity="1" />
+    <End Role="StateAction" Type="Knowledge.Store.StateAction" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="State">
+        <PropertyRef Name="Hash" />
+      </Principal>
+      <Dependent Role="StateAction">
+        <PropertyRef Name="PrevState_Hash" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK_StateAction_Action">
+    <End Role="StateAction" Type="Knowledge.Store.StateAction" Multiplicity="*" />
+    <End Role="Action" Type="Knowledge.Store.Actions" Multiplicity="1" />
+    <ReferentialConstraint>
+      <Principal Role="Action">
+        <PropertyRef Name="Id" />
+      </Principal>
+      <Dependent Role="StateAction">
+        <PropertyRef Name="Actions_Id" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK_ActionState_Action">
+    <End Role="Action" Type="Knowledge.Store.Actions" Multiplicity="1" />
+    <End Role="ActionState" Type="Knowledge.Store.ActionState" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="Action">
+        <PropertyRef Name="Id" />
+      </Principal>
+      <Dependent Role="ActionState">
+        <PropertyRef Name="Causes_Id" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK_ActionState_State">
+    <End Role="ActionState" Type="Knowledge.Store.ActionState" Multiplicity="*" />
+    <End Role="State" Type="Knowledge.Store.States" Multiplicity="1" />
+    <ReferentialConstraint>
+      <Principal Role="State">
+        <PropertyRef Name="Hash" />
+      </Principal>
+      <Dependent Role="ActionState">
+        <PropertyRef Name="NextState_Hash" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+</Schema></edmx:StorageModels>
+    <!-- CSDL content -->
+    <edmx:ConceptualModels>
+      <Schema xmlns="http://schemas.microsoft.com/ado/2009/11/edm" xmlns:cg="http://schemas.microsoft.com/ado/2006/04/codegeneration" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" Namespace="Knowledge" Alias="Self" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" annotation:UseStrongSpatialTypes="false">
+        <EntityContainer Name="KnowledgeContainer" annotation:LazyLoadingEnabled="true">
+          <EntitySet Name="States" EntityType="Knowledge.State" />
+          <EntitySet Name="Actions" EntityType="Knowledge.Action" />
+          <AssociationSet Name="StateAction" Association="Knowledge.StateAction">
+            <End Role="State" EntitySet="States" />
+            <End Role="Action" EntitySet="Actions" />
+          </AssociationSet>
+          <AssociationSet Name="ActionState" Association="Knowledge.ActionState">
+            <End Role="Action" EntitySet="Actions" />
+            <End Role="State" EntitySet="States" />
+          </AssociationSet>
+        </EntityContainer>
+        <EntityType Name="State">
+          <Key>
+            <PropertyRef Name="Hash" />
+          </Key>
+          <Property Name="Hash" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="None" />
+          <Property Name="Score" Type="Double" Nullable="false" DefaultValue="0" />
+          <Property Name="Explored" Type="Boolean" Nullable="false" DefaultValue="false" />
+          <NavigationProperty Name="Actions" Relationship="Knowledge.StateAction" FromRole="State" ToRole="Action" />
+          <NavigationProperty Name="Causes" Relationship="Knowledge.ActionState" FromRole="State" ToRole="Action" />
+        </EntityType>
+        <EntityType Name="Action">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Hash" Type="Double" Nullable="false" annotation:StoreGeneratedPattern="None" />
+          <Property Name="Score" Type="Double" Nullable="false" DefaultValue="0" />
+          <Property Name="Explored" Type="Boolean" Nullable="false" DefaultValue="false" />
+          <NavigationProperty Name="PrevState" Relationship="Knowledge.StateAction" FromRole="Action" ToRole="State" />
+          <NavigationProperty Name="NextState" Relationship="Knowledge.ActionState" FromRole="Action" ToRole="State" />
+        </EntityType>
+        <Association Name="StateAction">
+          <End Type="Knowledge.State" Role="State" Multiplicity="*" />
+          <End Type="Knowledge.Action" Role="Action" Multiplicity="*" />
+        </Association>
+        <Association Name="ActionState">
+          <End Type="Knowledge.Action" Role="Action" Multiplicity="*" />
+          <End Type="Knowledge.State" Role="State" Multiplicity="*" />
+        </Association>
+      </Schema>
+    </edmx:ConceptualModels>
+    <!-- C-S mapping content -->
+    <edmx:Mappings>
+    <Mapping Space="C-S" xmlns="http://schemas.microsoft.com/ado/2009/11/mapping/cs">
+  <EntityContainerMapping StorageEntityContainer="KnowledgeStoreContainer" CdmEntityContainer="KnowledgeContainer">
+    <EntitySetMapping Name="States">
+      <EntityTypeMapping TypeName="IsTypeOf(Knowledge.State)">
+        <MappingFragment StoreEntitySet="States">
+          <ScalarProperty Name="Hash" ColumnName="Hash" />
+          <ScalarProperty Name="Score" ColumnName="Score" />
+          <ScalarProperty Name="Explored" ColumnName="Explored" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="Actions">
+      <EntityTypeMapping TypeName="IsTypeOf(Knowledge.Action)">
+        <MappingFragment StoreEntitySet="Actions">
+          <ScalarProperty Name="Id" ColumnName="Id" />
+          <ScalarProperty Name="Hash" ColumnName="Hash" />
+          <ScalarProperty Name="Score" ColumnName="Score" />
+          <ScalarProperty Name="Explored" ColumnName="Explored" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <AssociationSetMapping Name="StateAction" TypeName="Knowledge.StateAction" StoreEntitySet="StateAction">
+      <EndProperty Name="State">
+        <ScalarProperty Name="Hash" ColumnName="PrevState_Hash" />
+      </EndProperty>
+      <EndProperty Name="Action">
+        <ScalarProperty Name="Id" ColumnName="Actions_Id" />
+      </EndProperty>
+    </AssociationSetMapping>
+    <AssociationSetMapping Name="ActionState" TypeName="Knowledge.ActionState" StoreEntitySet="ActionState">
+      <EndProperty Name="Action">
+        <ScalarProperty Name="Id" ColumnName="Causes_Id" />
+      </EndProperty>
+      <EndProperty Name="State">
+        <ScalarProperty Name="Hash" ColumnName="NextState_Hash" />
+      </EndProperty>
+    </AssociationSetMapping>
+  </EntityContainerMapping>
+</Mapping></edmx:Mappings>
+  </edmx:Runtime>
+  <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <edmx:Connection>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="MetadataArtifactProcessing" Value="EmbedInOutputAssembly" />
+      </DesignerInfoPropertySet>
+    </edmx:Connection>
+    <edmx:Options>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="ValidateOnBuild" Value="true" />
+        <DesignerProperty Name="EnablePluralization" Value="False" />
+        <DesignerProperty Name="CodeGenerationStrategy" Value="None" />
+        <DesignerProperty Name="UseLegacyProvider" Value="False" />
+      </DesignerInfoPropertySet>
+    </edmx:Options>
+    <!-- Diagram content (shape and connector positions) -->
+    <edmx:Diagrams>
+    </edmx:Diagrams>
+  </edmx:Designer>
+</edmx:Edmx>
