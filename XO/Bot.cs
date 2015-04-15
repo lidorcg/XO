@@ -29,7 +29,6 @@ namespace XO
             else
                 Learn(game.GetBoard());
             MyState.Explored = true;
-            Knowledge.SaveChanges();
         }
 
         private bool IKnowThis(int hash)
@@ -179,7 +178,6 @@ namespace XO
         {
             Action e = (Action)Trail.Peek();
             e.Explored = true;
-            Knowledge.SaveChanges();
             return Decode(e.Hash);
         }
 

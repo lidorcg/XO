@@ -11,7 +11,9 @@ namespace XO
 {
     using System;
     using System.Collections.Generic;
-    
+    using System.Diagnostics;
+
+    [DebuggerDisplay("{Hash}, {Explored}, {Score}")]
     public partial class Action
     {
         public Action()
