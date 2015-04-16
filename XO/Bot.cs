@@ -25,15 +25,16 @@ namespace XO
 
         private void Perceive(Game game)
         {
-            if (IKnowThis(Hash(game.GetBoard())));
-            else
+            if (!IKnowThis(Hash(game.GetBoard())))
                 Learn(game.GetBoard());
             MyState.Explored = true;
         }
 
         private bool IKnowThis(int hash)
         {
-            State n = SearchMemory(hash, MyState);
+            State n = null;
+            if (Trail.Count > 0)
+                n = SearchMemory(hash, (Action)Trail.Peek());
             if (n == null)
             {
                 n = Knowledge.States.Find(hash);
@@ -54,21 +55,12 @@ namespace XO
             return false;
         }
 
-        private State SearchMemory(double hash, State n)
+        private State SearchMemory(int hash, Action n)
         {
-            if (n != null)
+            foreach (State s in n.NextState)
             {
-                if (hash == n.Hash)
-                    return n;
-                foreach (Action e in n.Actions)
-                {
-                    foreach (State n1 in e.NextState)
-                    {
-                        State node = SearchMemory(hash, n1);
-                        if (node != null)
-                            return node;
-                    }
-                }
+                if (hash == s.Hash)
+                    return s;
             }
             return null;
         }
