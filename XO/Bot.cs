@@ -97,6 +97,7 @@ namespace XO
                 Action e = (Action)Trail.Peek();
                 e.NextState.Add(n);
             }
+            Knowledge.SaveChanges();
         }
 
 
